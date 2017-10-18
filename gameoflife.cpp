@@ -2,7 +2,6 @@
 #include <iostream>
 
 // TODO Template generation size
-// TODO Disable copy initialization/assignment or do deep copying/assignment
 // TODO Instead of bool values for each cell use enum class with Alive/Dead
 class Species {
 
@@ -23,6 +22,9 @@ private:
 public:
 
     Species(const grid&);
+    Species(const Species&);
+    Species& operator=(const Species&);
+
     void evolve();
     friend std::ostream& operator<<(std::ostream&, const Species&);
 };
@@ -124,6 +126,19 @@ Species::Species(const grid& generation_initial) {
     }
 }
 
+Species::Species(const Species& other) {
+    if (this != &other) {
+        *generation_current = *other.generation_current;
+    }
+}
+
+Species& Species::operator=(const Species& other) {
+    if (this != &other) {
+        *generation_current = *other.generation_current;
+    }
+    return *this;
+}
+
 // Checks for every cell if it can live on to the next generation
 // with the help of its neighbours or if it dies.
 // The evolved state for every cell is set for the future generation,
@@ -165,14 +180,17 @@ int main() {
     generation_initial[3][5] = true;
     generation_initial[4][5] = true;
 
-    Species speciesA(generation_initial);
-    std::cout << speciesA;
+    Species species_a(generation_initial);
+    species_a.evolve();
+    std::cout << species_a;
 
-    speciesA.evolve();
-    std::cout << speciesA;
+    Species species_b(species_a);
+    species_b.evolve();
+    std::cout << species_b;
 
-    speciesA.evolve();
-    std::cout << speciesA;
+    Species species_c(species_b);
+    species_c = species_a;
+    std::cout << species_c;
 
     return 0;
 }
