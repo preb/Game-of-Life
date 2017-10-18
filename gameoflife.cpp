@@ -24,9 +24,9 @@ public:
 };
 
 Species::Species(bool (*initial_generation)[10]) {
-    for (int i {0}; i < 10; ++i) {
-        for (int j {0}; j < 10; ++j) {
-            generation_a[i][j] = initial_generation[i][j];
+    for (int row {0}; row < 10; ++row) {
+        for (int column {0}; column < 10; ++column) {
+            generation_a[row][column] = initial_generation[row][column];
         }
     }
 }
@@ -126,13 +126,13 @@ void Species::change_state(int row, int column, bool state) {
 // The evolved state for every cell is set for the future generation,
 // which then becomes the current generation.
 void Species::evolve() {
-    for (int i {0}; i < 10; ++i) {
-        for (int j {0}; j < 10; ++j) {
-            int alive_neighbours {count_alive_neighbours(i, j)};
+    for (int row {0}; row < 10; ++row) {
+        for (int column {0}; column < 10; ++column) {
+            int alive_neighbours {count_alive_neighbours(row, column)};
             if (alive_neighbours < 2 || alive_neighbours > 3) {
-                change_state(i, j, false);
-            } else if (alive_neighbours == 3 || alive(i, j)) {
-                change_state(i, j, true);
+                change_state(row, column, false);
+            } else if (alive_neighbours == 3 || alive(row, column)) {
+                change_state(row, column, true);
             }
         }
     }
@@ -143,9 +143,9 @@ void Species::evolve() {
 }
 
 std::ostream& operator<<(std::ostream &out, const Species &species) {
-    for (int i {0}; i < 10; ++i) {
-        for (int j {0}; j < 10; ++j) {
-            if (species.alive(i, j)) {
+    for (int row {0}; row < 10; ++row) {
+        for (int column {0}; column < 10; ++column) {
+            if (species.alive(row, column)) {
                 out << "# ";
             } else {
                 out << ' ';
