@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 
 // TODO Template generation size
@@ -6,32 +7,34 @@
 class Species {
 
 private:
-    bool generation_a [10][10] {};
-    bool generation_b [10][10] {};
-    bool (*generation_current)[10] {generation_a};
-    bool (*generation_future)[10]  {generation_b};
 
-    bool alive(int, int) const;
-    int count_alive_neighbours(int, int) const;
+    using grid = std::array<std::array<bool, 10>, 10>;
+
+    grid generation_a {};
+    grid generation_b {};
+
+    grid* generation_current {&generation_a};
+    grid* generation_future  {&generation_b};
+
     void change_state(int, int, bool);
+    bool alive(int, int) const;
+    int  count_alive_neighbours(int, int) const;
 
 public:
-    Species(bool (*)[10]);
+
+    Species(const grid&);
     void evolve();
     friend std::ostream& operator<<(std::ostream&, const Species&);
 };
 
-Species::Species(bool (*initial_generation)[10]) {
-    for (int row {0}; row < 10; ++row) {
-        for (int column {0}; column < 10; ++column) {
-            generation_a[row][column] = initial_generation[row][column];
-        }
-    }
+void Species::change_state(int row, int column, bool state) {
+    // TODO throw exception if row, column out of bounds
+    (*generation_future)[row][column] = state;
 }
 
 bool Species::alive(int row, int column) const {
     // TODO throw exception if row, column out of bounds
-    return generation_current[row][column];
+    return (*generation_current)[row][column];
 }
 
 int Species::count_alive_neighbours(int row, int column) const {
@@ -113,10 +116,12 @@ int Species::count_alive_neighbours(int row, int column) const {
     return alive_neighbours;
 }
 
-// TODO Remove generation parameter, we only want to change future states.
-void Species::change_state(int row, int column, bool state) {
-    // TODO throw exception if row, column out of bounds
-    generation_future[row][column] = state;
+Species::Species(const grid& generation_initial) {
+    for (int row {0}; row < 10; ++row) {
+        for (int column {0}; column < 10; ++column) {
+            generation_a[row][column] = generation_initial[row][column];
+        }
+    }
 }
 
 // Checks for every cell if it can live on to the next generation
@@ -135,15 +140,15 @@ void Species::evolve() {
         }
     }
     // Recycle generations
-    bool (*generation_temporary)[10] = generation_current;
+    grid* generation_temporary {generation_current};
     generation_current = generation_future;
     generation_future  = generation_temporary;
 }
 
 std::ostream& operator<<(std::ostream &out, const Species &species) {
-    for (int row {0}; row < 10; ++row) {
-        for (int column {0}; column < 10; ++column) {
-            if (species.alive(row, column)) {
+    for (const auto& row : *species.generation_current) {
+        for (const auto& cell : row) {
+            if (cell) {
                 out << "# ";
             } else {
                 out << ' ';
@@ -155,12 +160,12 @@ std::ostream& operator<<(std::ostream &out, const Species &species) {
 }
 
 int main() {
-    bool initial_generation[10][10] {};
-    initial_generation[2][5] = true;
-    initial_generation[3][5] = true;
-    initial_generation[4][5] = true;
+    std::array<std::array<bool, 10>, 10> generation_initial {};
+    generation_initial[2][5] = true;
+    generation_initial[3][5] = true;
+    generation_initial[4][5] = true;
 
-    Species speciesA(initial_generation);
+    Species speciesA(generation_initial);
     std::cout << speciesA;
 
     speciesA.evolve();
