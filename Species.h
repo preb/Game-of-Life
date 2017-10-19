@@ -154,11 +154,6 @@ int Species<size>::count_alive_neighbours(int row, int column) const {
 template <int size>
 Species<size>::Species(const grid& generation_initial) {
     generation_a = generation_initial;
-    /*for (int row {0}; row < size; ++row) {
-        for (int column {0}; column < size; ++column) {
-            generation_a[row][column] = generation_initial[row][column];
-        }
-    }*/
 }
 
 template <int size>
