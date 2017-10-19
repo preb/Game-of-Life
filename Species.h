@@ -3,6 +3,21 @@
 
 #include <ostream>
 
+// Species implements Conway's Game of Life, which is a cellular automaton.
+// The game is a zero-player game, meaning that its evolution is determined
+// by its initial state, requiring no further input.
+// The game begins with an initial configuration of cells, which then can
+// be observed evolving.
+// The universe of the game is a two-dimensional grid (std::array, wraps around) of
+// square cells, each of which is in one of two possible states, alive or dead.
+// Every cell interacts with its neighbours, the amount of these neighbours
+// determines if the cell lives on or dies.
+//
+// The class takes an initial configuration of the NxN grid as input.
+// Example:
+//    std::array<std::array<Species<N>::Cell, N>, N> grid {};
+//    Species<N> species_a(grid);
+
 template <int size>
 class Species {
 
@@ -17,15 +32,22 @@ private:
 
     using grid = std::array<std::array<Cell, size>, size>;
 
+    // All cells evolve or die simultaneously, therefore we need
+    // one grid for the current generation and another grid for
+    // the future/evolved generation.
     grid generation_a {};
     grid generation_b {};
 
+    // Using pointers to each grid allows us to easily change
+    // which grid is considered the current generation and which
+    // is considered the future generation. We also don't need
+    // to make unnecessary copies.
     grid* generation_current {&generation_a};
     grid* generation_future  {&generation_b};
 
-    void change_state(int, int, Cell);
-    bool alive(int, int) const;
-    int  count_alive_neighbours(int, int) const;
+    void change_state(int, int /* coordinates */, Cell);
+    bool alive(int, int /* coordinates */) const;
+    int  count_alive_neighbours(int, int /* coordinates */) const;
 
 public:
 
@@ -41,19 +63,16 @@ public:
 
 template <int size>
 void Species<size>::change_state(int row, int column, Cell state) {
-    // TODO throw exception if row, column out of bounds
     (*generation_future)[row][column] = state;
 }
 
 template <int size>
 bool Species<size>::alive(int row, int column) const {
-    // TODO throw exception if row, column out of bounds
     return (*generation_current)[row][column] == Cell::ALIVE;
 }
 
 template <int size>
 int Species<size>::count_alive_neighbours(int row, int column) const {
-    // TODO throw exception if row, column out of bounds
     const int edge {size - 1};
     int alive_neighbours {0};
 
@@ -134,16 +153,19 @@ int Species<size>::count_alive_neighbours(int row, int column) const {
 
 template <int size>
 Species<size>::Species(const grid& generation_initial) {
-    for (int row {0}; row < size; ++row) {
+    generation_a = generation_initial;
+    /*for (int row {0}; row < size; ++row) {
         for (int column {0}; column < size; ++column) {
             generation_a[row][column] = generation_initial[row][column];
         }
-    }
+    }*/
 }
 
 template <int size>
 Species<size>::Species(const Species& other) {
     if (this != &other) {
+        // We only need to copy the current generation because
+        // we will overwrite the future generation anyways.
         *generation_current = *other.generation_current;
     }
 }
@@ -151,15 +173,17 @@ Species<size>::Species(const Species& other) {
 template <int size>
 Species<size>& Species<size>::operator=(const Species& other) {
     if (this != &other) {
+        // We only need to copy the current generation because
+        // we will overwrite the future generation anyways.
         *generation_current = *other.generation_current;
     }
     return *this;
 }
 
-// Checks for every cell if it can live on to the next generation
-// with the help of its neighbours or if it dies.
-// The evolved state for every cell is set for the future generation,
-// which then becomes the current generation.
+// Count every cell's neighbours:
+//    1. If a cell has fewer than 2 or more than 3 it dies/stays dead.
+//    2. If a cell has 3 it stays alive/comes alive.
+//    3. If a cell is alive and has 2 neighbours it stays alive.
 template <int size>
 void Species<size>::evolve() {
     for (int row {0}; row < size; ++row) {
@@ -172,7 +196,9 @@ void Species<size>::evolve() {
             }
         }
     }
-    // Recycle generations
+    // Switch generations. The future generation becomes the new
+    // current generation, the current generation becomes the next
+    // future generation.
     grid* generation_temporary {generation_current};
     generation_current = generation_future;
     generation_future  = generation_temporary;
@@ -193,4 +219,4 @@ std::ostream& operator<<(std::ostream& out, const Species<size>& species) {
     return out;
 }
 
-#endif
+#endif // SPECIES_H
