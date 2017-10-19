@@ -5,9 +5,16 @@
 // TODO Instead of bool values for each cell use enum class with Alive/Dead
 class Species {
 
+public:
+
+    enum class Cell {
+        DEAD,
+        ALIVE
+    };
+
 private:
 
-    using grid = std::array<std::array<bool, 10>, 10>;
+    using grid = std::array<std::array<Cell, 10>, 10>;
 
     grid generation_a {};
     grid generation_b {};
@@ -15,7 +22,7 @@ private:
     grid* generation_current {&generation_a};
     grid* generation_future  {&generation_b};
 
-    void change_state(int, int, bool);
+    void change_state(int, int, Cell);
     bool alive(int, int) const;
     int  count_alive_neighbours(int, int) const;
 
@@ -29,14 +36,14 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Species&);
 };
 
-void Species::change_state(int row, int column, bool state) {
+void Species::change_state(int row, int column, Cell state) {
     // TODO throw exception if row, column out of bounds
     (*generation_future)[row][column] = state;
 }
 
 bool Species::alive(int row, int column) const {
     // TODO throw exception if row, column out of bounds
-    return (*generation_current)[row][column];
+    return (*generation_current)[row][column] == Cell::ALIVE;
 }
 
 int Species::count_alive_neighbours(int row, int column) const {
@@ -148,9 +155,9 @@ void Species::evolve() {
         for (int column {0}; column < 10; ++column) {
             int alive_neighbours {count_alive_neighbours(row, column)};
             if (alive_neighbours < 2 || alive_neighbours > 3) {
-                change_state(row, column, false);
+                change_state(row, column, Cell::DEAD);
             } else if (alive_neighbours == 3 || alive(row, column)) {
-                change_state(row, column, true);
+                change_state(row, column, Cell::ALIVE);
             }
         }
     }
@@ -163,7 +170,7 @@ void Species::evolve() {
 std::ostream& operator<<(std::ostream &out, const Species &species) {
     for (const auto& row : *species.generation_current) {
         for (const auto& cell : row) {
-            if (cell) {
+            if (cell == Species::Cell::ALIVE) {
                 out << "# ";
             } else {
                 out << ' ';
@@ -175,10 +182,10 @@ std::ostream& operator<<(std::ostream &out, const Species &species) {
 }
 
 int main() {
-    std::array<std::array<bool, 10>, 10> generation_initial {};
-    generation_initial[2][5] = true;
-    generation_initial[3][5] = true;
-    generation_initial[4][5] = true;
+    std::array<std::array<Species::Cell, 10>, 10> generation_initial {};
+    generation_initial[2][5] = Species::Cell::ALIVE;
+    generation_initial[3][5] = Species::Cell::ALIVE;
+    generation_initial[4][5] = Species::Cell::ALIVE;
 
     Species species_a(generation_initial);
     species_a.evolve();
