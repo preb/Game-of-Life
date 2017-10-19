@@ -203,7 +203,7 @@ std::ostream& operator<<(std::ostream& out, const Species<size>& species) {
     for (const auto& row : *species.generation_current) {
         for (const auto& cell : row) {
             if (cell == Species<size>::Cell::ALIVE) {
-                out << "# ";
+                out << '#';
             } else {
                 out << ' ';
             }
