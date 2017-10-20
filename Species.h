@@ -1,6 +1,8 @@
 #ifndef SPECIES_H
 #define SPECIES_H
 
+#include <array>
+#include <cstddef>
 #include <ostream>
 
 // Species implements Conway's Game of Life, which is a cellular automaton.
@@ -18,7 +20,7 @@
 //    std::array<std::array<Species<N>::Cell, N>, N> grid {};
 //    Species<N> species_a(grid);
 
-template <int size>
+template <std::size_t size>
 class Species {
 
 public:
@@ -57,21 +59,21 @@ public:
 
     void evolve();
 
-    template <int samesize>
+    template <std::size_t samesize>
     friend std::ostream& operator<<(std::ostream&, const Species<samesize>&);
 };
 
-template <int size>
+template <std::size_t size>
 void Species<size>::change_state(int row, int column, Cell state) {
     (*generation_future)[row][column] = state;
 }
 
-template <int size>
+template <std::size_t size>
 bool Species<size>::alive(int row, int column) const {
     return (*generation_current)[row][column] == Cell::ALIVE;
 }
 
-template <int size>
+template <std::size_t size>
 int Species<size>::count_alive_neighbours(int row, int column) const {
     const int edge {size - 1};
     int alive_neighbours {0};
@@ -151,11 +153,11 @@ int Species<size>::count_alive_neighbours(int row, int column) const {
     return alive_neighbours;
 }
 
-template <int size>
+template <std::size_t size>
 Species<size>::Species(const grid& generation_initial):
     generation_a {generation_initial} {}
 
-template <int size>
+template <std::size_t size>
 Species<size>::Species(const Species& other) {
     if (this != &other) {
         // We only need to copy the current generation because
@@ -164,7 +166,7 @@ Species<size>::Species(const Species& other) {
     }
 }
 
-template <int size>
+template <std::size_t size>
 Species<size>& Species<size>::operator=(const Species& other) {
     if (this != &other) {
         // We only need to copy the current generation because
@@ -178,7 +180,7 @@ Species<size>& Species<size>::operator=(const Species& other) {
 //    1. If a cell has fewer than 2 or more than 3 it dies/stays dead.
 //    2. If a cell has 3 it stays alive/comes alive.
 //    3. If a cell is alive and has 2 neighbours it stays alive.
-template <int size>
+template <std::size_t size>
 void Species<size>::evolve() {
     for (int row {0}; row < size; ++row) {
         for (int column {0}; column < size; ++column) {
@@ -198,7 +200,7 @@ void Species<size>::evolve() {
     generation_future  = generation_temporary;
 }
 
-template <int size>
+template <std::size_t size>
 std::ostream& operator<<(std::ostream& out, const Species<size>& species) {
     for (const auto& row : *species.generation_current) {
         for (const auto& cell : row) {
