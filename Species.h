@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <ostream>
+#include <utility>
 
 // Species implements Conway's Game of Life, which is a cellular automaton.
 // The game is a zero-player game, meaning that its evolution is determined
@@ -32,6 +33,7 @@ public:
 
 private:
 
+    using coordinate = std::pair<std::size_t, std::size_t>;
     using grid = std::array<std::array<Cell, size>, size>;
 
     // All cells evolve or die simultaneously, therefore we need
@@ -47,9 +49,9 @@ private:
     grid* generation_current {&generation_a};
     grid* generation_future  {&generation_b};
 
-    void change_state(int, int /* coordinates */, Cell);
-    bool alive(int, int /* coordinates */) const;
-    int  count_alive_neighbours(int, int /* coordinates */) const;
+    void change_state(const coordinate&, Cell);
+    bool alive(const coordinate&) const;
+    int  count_alive_neighbours(const coordinate&) const;
 
 public:
 
@@ -64,90 +66,98 @@ public:
 };
 
 template <std::size_t size>
-void Species<size>::change_state(int row, int column, Cell state) {
-    (*generation_future)[row][column] = state;
+void Species<size>::change_state(const coordinate& cell, Cell state) {
+    (*generation_future)[cell.first][cell.second] = state;
 }
 
 template <std::size_t size>
-bool Species<size>::alive(int row, int column) const {
-    return (*generation_current)[row][column] == Cell::ALIVE;
+bool Species<size>::alive(const coordinate& cell) const {
+    return (*generation_current)[cell.first][cell.second] == Cell::ALIVE;
 }
 
 template <std::size_t size>
-int Species<size>::count_alive_neighbours(int row, int column) const {
-    const int edge {size - 1};
-    int alive_neighbours {0};
+int Species<size>::count_alive_neighbours(const coordinate& cell) const {
+
+    std::array<coordinate, 8> coordinates;
+    const std::size_t row    {cell.first};
+    const std::size_t column {cell.second};
+    const std::size_t edge   {size - 1};
 
     // Check north
     if (row == 0) {
-        if (alive(edge, column)) ++alive_neighbours;
+        coordinates[0] = std::make_pair(edge, column);
     } else {
-        if (alive(row - 1, column)) ++alive_neighbours;
+        coordinates[0] = std::make_pair(row - 1, column);
     }
 
     // Check south
     if (row == edge) {
-        if (alive(0, column)) ++alive_neighbours;
+        coordinates[1] = std::make_pair(0, column);
     } else {
-        if (alive(row + 1, column)) ++alive_neighbours;
+        coordinates[1] = std::make_pair(row + 1, column);
     }
 
     // Check west
     if (column == 0) {
-        if (alive(row, edge)) ++alive_neighbours;
+        coordinates[2] = std::make_pair(row, edge);
     } else {
-        if (alive(row, column - 1)) ++alive_neighbours;
+        coordinates[2] = std::make_pair(row, column - 1);
     }
 
     // Check east
     if (column == edge) {
-        if (alive(row, 0)) ++alive_neighbours;
+        coordinates[3] = std::make_pair(row, 0);
     } else {
-        if (alive(row, column + 1)) ++alive_neighbours;
+        coordinates[3] = std::make_pair(row, column + 1);
     }
 
     // Check north west
     if (row == 0 && column == 0) {
-        if (alive(edge, edge)) ++alive_neighbours;
+        coordinates[4] = std::make_pair(edge, edge);
     } else if (row == 0) {
-        if (alive(edge, column - 1)) ++alive_neighbours;
+        coordinates[4] = std::make_pair(edge, column - 1);
     } else if (column == 0) {
-        if (alive(row - 1, edge)) ++alive_neighbours;
+        coordinates[4] = std::make_pair(row - 1, edge);
     } else {
-        if (alive(row - 1, column - 1)) ++alive_neighbours;
+        coordinates[4] = std::make_pair(row - 1, column - 1);
     }
 
     // Check north east
     if (row == 0 && column == edge) {
-        if (alive(edge, 0)) ++alive_neighbours;
+        coordinates[5] = std::make_pair(edge, 0);
     } else if (row == 0) {
-        if (alive(edge, column + 1)) ++alive_neighbours;
+        coordinates[5] = std::make_pair(edge, column + 1);
     } else if (column == edge) {
-        if (alive(row - 1, 0)) ++alive_neighbours;
+        coordinates[5] = std::make_pair(row - 1, 0);
     } else  {
-        if (alive(row - 1, column + 1)) ++alive_neighbours;
+        coordinates[5] = std::make_pair(row - 1, column + 1);
     }
 
     // Check south west
     if (row == edge && column == 0) {
-        if (alive(0, edge)) ++alive_neighbours;
+        coordinates[6] = std::make_pair(0, edge);
     } else if (row == edge) {
-        if (alive(0, column - 1)) ++alive_neighbours;
+        coordinates[6] = std::make_pair(0, column - 1);
     } else if (column == 0) {
-        if (alive(row + 1, edge)) ++alive_neighbours;
+        coordinates[6] = std::make_pair(row + 1, edge);
     } else {
-        if (alive(row + 1, column - 1)) ++alive_neighbours;
+        coordinates[6] = std::make_pair(row + 1, column - 1);
     }
 
     // Check south east
     if (row == edge && column == edge) {
-        if (alive(0, 0)) ++alive_neighbours;
+        coordinates[7] = std::make_pair(0, 0);
     } else if (row == edge) {
-        if (alive(0, column + 1)) ++alive_neighbours;
+        coordinates[7] = std::make_pair(0, column + 1);
     } else if (column == edge) {
-        if (alive(row + 1, 0)) ++alive_neighbours;
+        coordinates[7] = std::make_pair(row + 1, 0);
     } else {
-        if (alive(row + 1, column + 1)) ++alive_neighbours;
+        coordinates[7] = std::make_pair(row + 1, column + 1);
+    }
+
+    int alive_neighbours {0};
+    for (const auto& cell : coordinates) {
+        if (alive(cell)) ++alive_neighbours;
     }
 
     return alive_neighbours;
@@ -182,13 +192,14 @@ Species<size>& Species<size>::operator=(const Species& other) {
 //    3. If a cell is alive and has 2 neighbours it stays alive.
 template <std::size_t size>
 void Species<size>::evolve() {
-    for (int row {0}; row < size; ++row) {
-        for (int column {0}; column < size; ++column) {
-            int alive_neighbours {count_alive_neighbours(row, column)};
-            if (alive_neighbours < 2 || alive_neighbours > 3) {
-                change_state(row, column, Cell::DEAD);
-            } else if (alive_neighbours == 3 || alive(row, column)) {
-                change_state(row, column, Cell::ALIVE);
+    for (std::size_t row {0}; row < size; ++row) {
+        for (std::size_t column {0}; column < size; ++column) {
+            const coordinate cell(row, column);
+            const int alive_neighbours {count_alive_neighbours(cell)};
+            if (alive_neighbours == 3 || (alive(cell) && alive_neighbours == 2)) {
+                change_state(cell, Cell::ALIVE);
+            } else {
+                change_state(cell, Cell::DEAD);
             }
         }
     }
