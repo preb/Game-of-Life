@@ -203,9 +203,8 @@ void Species<size>::evolve() {
             }
         }
     }
-    // Switch generations. The future generation becomes the new
-    // current generation, the current generation becomes the next
-    // future generation.
+    // The future generation becomes the new current generation.
+    // The current generation becomes the next future generation.
     std::swap(generation_current, generation_future);
 }
 

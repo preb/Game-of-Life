@@ -21,6 +21,4 @@ int main() {
 
     species_a.evolve();
     std::cout << species_a;
-
-    return 0;
 }
