@@ -18,7 +18,7 @@
 //
 // The class takes an initial configuration of the NxN grid as input.
 // Example:
-//    std::array<std::array<Species<N>::Cell, N>, N> grid {};
+//    std::array<std::array<Species<N>::CellState, N>, N> grid {};
 //    Species<N> species_a(grid);
 
 template <std::size_t size>
@@ -26,7 +26,7 @@ class Species {
 
 public:
 
-    enum class Cell {
+    enum class CellState {
         DEAD,
         ALIVE
     };
@@ -34,7 +34,7 @@ public:
 private:
 
     using coordinate = std::pair<std::size_t, std::size_t>;
-    using grid = std::array<std::array<Cell, size>, size>;
+    using grid = std::array<std::array<CellState, size>, size>;
 
     // All cells evolve or die simultaneously, therefore we need
     // one grid for the current generation and another grid for
@@ -49,7 +49,7 @@ private:
     grid* generation_current {&generation_a};
     grid* generation_future  {&generation_b};
 
-    void change_state(const coordinate&, Cell);
+    void change_state(const coordinate&, CellState);
     bool alive(const coordinate&) const;
     int  count_alive_neighbours(const coordinate&) const;
 
@@ -66,13 +66,13 @@ public:
 };
 
 template <std::size_t size>
-void Species<size>::change_state(const coordinate& cell, Cell state) {
+void Species<size>::change_state(const coordinate& cell, CellState state) {
     (*generation_future)[cell.first][cell.second] = state;
 }
 
 template <std::size_t size>
 bool Species<size>::alive(const coordinate& cell) const {
-    return (*generation_current)[cell.first][cell.second] == Cell::ALIVE;
+    return (*generation_current)[cell.first][cell.second] == CellState::ALIVE;
 }
 
 template <std::size_t size>
@@ -197,9 +197,9 @@ void Species<size>::evolve() {
             const coordinate cell(row, column);
             const int alive_neighbours {count_alive_neighbours(cell)};
             if (alive_neighbours == 3 || (alive(cell) && alive_neighbours == 2)) {
-                change_state(cell, Cell::ALIVE);
+                change_state(cell, CellState::ALIVE);
             } else {
-                change_state(cell, Cell::DEAD);
+                change_state(cell, CellState::DEAD);
             }
         }
     }
@@ -215,7 +215,7 @@ template <std::size_t size>
 std::ostream& operator<<(std::ostream& out, const Species<size>& species) {
     for (const auto& row : *species.generation_current) {
         for (const auto& cell : row) {
-            if (cell == Species<size>::Cell::ALIVE) {
+            if (cell == Species<size>::CellState::ALIVE) {
                 out << '#';
             } else {
                 out << ' ';
