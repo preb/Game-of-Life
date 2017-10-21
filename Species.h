@@ -206,9 +206,7 @@ void Species<size>::evolve() {
     // Switch generations. The future generation becomes the new
     // current generation, the current generation becomes the next
     // future generation.
-    grid* generation_temporary {generation_current};
-    generation_current = generation_future;
-    generation_future  = generation_temporary;
+    std::swap(generation_current, generation_future);
 }
 
 template <std::size_t size>
